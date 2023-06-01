@@ -1,0 +1,36 @@
+{
+    "user" : "luis_araya2309",
+    "password" : "luis_password",
+    "fileSystem" : { 
+        "name" : "root",
+        "childrenDirs" : [
+            {
+                "name" : "Downloads",
+                "childrenDirs" : [],
+                "childrenDocs": [
+                    {
+                        "name" : "descarga",
+                        "extension" : ".txt",
+                        "creation_date" : "31/05/2023 02:53:27am",
+                        "share_info" : ["gupi292","lalicas"],
+                        "modification_date" : "31/05/2023 04:23:58am",
+                        "data" : "Este es el contenido de descarga."                        
+                    }
+                ]                
+            }
+            
+        ],
+        "childrenDocs": [
+                {
+                    "name" : "hola.txt",
+                    "data" : "Este es el contenido de hola."
+            }
+        ]
+    },
+
+    "sharedFiles" : {
+        "name" : "sharedFiles",
+        "childrenDocs" : []
+    }
+    
+}

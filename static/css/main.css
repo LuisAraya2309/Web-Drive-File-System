@@ -1,0 +1,11 @@
+body {
+    background: url("../images/wallpaper.png") no-repeat center center fixed;
+    background-size: cover;
+    height: 60vh;
+    display: flex;
+    align-items: center;
+}
+
+.btn-register {
+    margin-top: 10px;
+}
