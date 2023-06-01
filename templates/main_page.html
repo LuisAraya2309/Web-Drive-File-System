@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Drive</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main_page.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-4 text-center">Web Cloud Drive File System</h1>
+        <h2 class="mt-5 mb-4 text-center">¡Bienvenido {{ username }}!</h2>
+        <h3 class="mt-5 mb-4 text-center">Ruta actual</h3>
+        <h4 class="mt-5 mb-4 text-center">{{ username }}@{{ path }}</h4>
+        <div class="text-center">
+            <form action="/terminal/process_command" method='POST'>
+                <div class="input-group"  style="max-width: 500px; margin: 0 auto;">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">$</span>
+                    </div>
+                    <input type="text" class="form-control" placeholder="Ingresa tu comando aquí">
+                </div>
+                <button type="submit" class="btn btn-dark submit-button">Procesar</button>
+            </form>
+        </div>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

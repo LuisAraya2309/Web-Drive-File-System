@@ -11,8 +11,18 @@ class file_system_db :
         collection_documents = [  document for document in self.collection.find() ]
         return collection_documents
     
-    def get_user_data(self,username : str):
-        '''
-        '''
-        return ""
+    def log_in(self,username : str, password : str):
+        login_pipeline = [
+                            {
+                                '$match': {
+                                    'user': username,
+                                    'password': password
+                                }
+                            },
+                            {
+                                '$limit': 1
+                            }
+                        ]
+        logged = self.collection.aggregate(login_pipeline).alive
+        return logged
 

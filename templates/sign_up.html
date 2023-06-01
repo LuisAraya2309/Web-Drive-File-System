@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registro de Usuario</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-4 text-center">Registrarse</h1>
+        <div class="text-center">
+            <form>
+                <div class="form-group" style="max-width: 400px; margin: 0 auto;">
+                    <label for="username">Nombre de usuario</label>
+                    <input required placeholder="Usuario" type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="form-group" style="max-width: 400px; margin: 0 auto;">
+                    <label for="password">Contraseña</label>
+                    <input required placeholder="Contraseña" type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="form-group" style="max-width: 400px; margin: 0 auto;">
+                    <label for="storage">Tamaño de Almacenamiento</label>
+                    <input required placeholder="Tamaño en bytes" type="number" class="form-control" id="storage" name="storage" required>
+                </div>
+            </br>
+                <button type="submit" class="btn btn-dark submit-button">Registrarse</button>
+            </form>
+        </div>
+    </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
