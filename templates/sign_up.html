@@ -7,10 +7,16 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
+    
     <div class="container">
+        {% if alert_message %}
+            <div class="alert alert-danger" role="alert" style="max-width: 400px; margin: 0 auto;">
+            ¡Este nombre de usuario ya está en uso!
+            </div>
+        {% endif %}
         <h1 class="mt-5 mb-4 text-center">Registrarse</h1>
         <div class="text-center">
-            <form>
+            <form action='/users/register' method='POST'>
                 <div class="form-group" style="max-width: 400px; margin: 0 auto;">
                     <label for="username">Nombre de usuario</label>
                     <input required placeholder="Usuario" type="text" class="form-control" id="username" name="username" required>

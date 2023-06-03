@@ -9,6 +9,11 @@
 </head>
 <body>
     <div class="container">
+        {% if alert_message %}
+            <div class="alert alert-success" role="alert" style="max-width: 400px; margin: 0 auto;">
+            ¡Usuario creado correctamente!
+            </div>
+        {% endif %}
         <h1 class="mt-5 mb-4 text-center">¡Bienvenido a su Driver Web!</h1>
         <h2 class="mt-5 mb-4 text-center">Iniciar sesión</h2>
         <div class="row justify-content-center">

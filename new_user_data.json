@@ -1,0 +1,15 @@
+{
+    "user" : ,
+    "password" : ,
+    "storage" : ,
+    "fileSystem" : { 
+        "name" : "root",
+        "childrenDirs" : [],
+        "childrenDocs": []
+    },
+    "sharedFiles" : {
+        "name" : "sharedFiles",
+        "childrenDocs" : []
+    }
+    
+}

@@ -5,12 +5,11 @@
         "name" : "root",
         "childrenDirs" : [
             {
-                "name" : "Downloads",
+                "name" : "documents",
                 "childrenDirs" : [],
                 "childrenDocs": [
                     {
-                        "name" : "descarga",
-                        "extension" : ".txt",
+                        "name" : "descarga.txt",
                         "creation_date" : "31/05/2023 02:53:27am",
                         "share_info" : ["gupi292","lalicas"],
                         "modification_date" : "31/05/2023 04:23:58am",

@@ -1,5 +1,5 @@
 #Python Imports
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 
 #Routes Modules imports
 from routes.users import users_mod
