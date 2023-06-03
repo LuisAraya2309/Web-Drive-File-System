@@ -39,6 +39,7 @@ class file_system_db :
     def register(self, username : str, password : str, storage : int):
         user_exists_pipeline = [ {'$match': {'user': username} } ]
         user_exists = self.collection.aggregate(user_exists_pipeline).alive
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if user_exists:
             return False
         else:
@@ -48,6 +49,8 @@ class file_system_db :
                                 "storage" : storage,
                                 "fileSystem" : { 
                                     "name" : "root",
+                                    "creation_date" : timestamp,
+                                    "modification_date" : timestamp,
                                     "childrenDirs" : [],
                                     "childrenDocs": []
                                 },
@@ -81,6 +84,27 @@ class file_system_db :
                 return True
         return False
     
+    def dir_exists(self, username : str, dir_name : str, path:str):
+        # Example path: root/documents/
+        dir_levels = path.split('/')[1:-1] # This deletes the empty character and root dir
+        # dir_leves = ['documents']
+        user_data = self.get_user_data(username)['fileSystem']
+        
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs
+                    break
+        
+        # Now we look for all the children dirs in that level to see if the dir exists
+        children_dirs = user_data['childrenDirs']
+        for dir in children_dirs:
+            if dir['name'] == dir_name:
+                return True
+        return False
+        
+    
     def create_file(self, username : str, command_line : str, path : str):
         file_name = command_line.split(' ')[1]
         file_content = re.findall(r'"(.*)"',command_line)[0]
@@ -91,7 +115,6 @@ class file_system_db :
         
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
-        print('INICIO', original_data)
         user_data = original_data['fileSystem']
         #First we locate the directory
         for level in dir_levels:
@@ -117,6 +140,44 @@ class file_system_db :
                         "modification_date" : timestamp,
                         "data" : file_content                        
                     })
+        #Update user data
+        self.update_user_data(username, user_data)
+        return True
+    
+    def create_dir(self, username : str, command_line : str, path : str):
+        dir_name = command_line.split(' ')[1]
+        forced_mkdir = '--force' in command_line
+        dir_exists = self.dir_exists(username, dir_name, path)
+        if dir_exists and not forced_mkdir:
+            return False
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        
+        #First we navigate to actual path
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break           
+        children_dirs = user_data['childrenDirs']
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if dir_exists: #Then we are going to override the dir
+            for dirs in children_dirs:
+                if dirs['name'] == dir_name:
+                    dirs['childrenDirs'] = []
+                    dirs['childrenDocs'] = []
+                    dirs['modification_date'] = timestamp
+                    break
+        else: #Then we create the directory
+            children_dirs.append({
+                "name" : dir_name,
+                "creation_date" : timestamp,
+                "modification_date" : timestamp,
+                "childrenDirs" : [],
+                "childrenDocs" : []
+            })
+            
         #Update user data
         self.update_user_data(username, user_data)
         return True

@@ -3,9 +3,13 @@
     "password" : "luis_password",
     "fileSystem" : { 
         "name" : "root",
+        "creation_date" : "31/05/2023 02:53:27am",
+        "modification_date" : "31/05/2023 04:23:58am",
         "childrenDirs" : [
             {
                 "name" : "documents",
+                "creation_date" : "31/05/2023 02:53:27am",
+                "modification_date" : "31/05/2023 04:23:58am",
                 "childrenDirs" : [],
                 "childrenDocs": [
                     {
@@ -22,7 +26,9 @@
         "childrenDocs": [
                 {
                     "name" : "hola.txt",
-                    "data" : "Este es el contenido de hola."
+                    "data" : "Este es el contenido de hola.",
+                    "creation_date" : "31/05/2023 02:53:27am",
+                    "modification_date" : "31/05/2023 04:23:58am"
             }
         ]
     },

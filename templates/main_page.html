@@ -7,12 +7,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <div class="container">
-        {% if show_alert %}
-            <div class="alert alert-danger" role="alert" style="max-width: 400px; margin: 0 auto;">
-                {{ alert_message }}
-            </div>
-        {% endif %}
+    <div class="container">        
         <h1 class="mt-5 mb-4 text-center">Web Cloud Drive File System</h1>
         <h2 class="mt-5 mb-4 text-center">¡Bienvenido {{ username }}!</h2>
         <h3 class="mt-5 mb-4 text-center">Ruta actual</h3>
@@ -34,6 +29,16 @@
                 
                 <button type="submit" class="btn btn-dark submit-button">Procesar</button>
             </form>
+            <br/>
+            {% if error_alert %}
+                <div class="alert alert-danger" role="alert" style="max-width: 400px; margin: 0 auto;">
+                    {{ alert_message }}
+                </div>
+            {% elif success_alert %}
+                <div class="alert alert-success" role="alert" style="max-width: 400px; margin: 0 auto;">
+                    {{ success_message }}
+                </div>
+            {% endif %}
         </div>
     </div>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

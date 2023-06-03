@@ -12,7 +12,7 @@ def login():
     password = request.form['password']
     logged = file_system_db.log_in(username=username,password=password)
     path = 'root/'
-    return render_template('main_page.html',**locals()) if logged else "Not allowed"
+    return render_template('main_page.html',**locals()) if logged else render_template('not_allowed.html')
 
 # Sign Up
 @users_mod.route('/sign_up',methods=["POST"])
