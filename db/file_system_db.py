@@ -184,6 +184,129 @@ class file_system_db :
         self.update_user_data(username, original_data)
         return True
     
+    def delete_dir(self, username : str, command_line : str, path : str):
+        
+        dir_name = command_line.split(' ')[1]
+        dir_exists = self.dir_exists(username, dir_name, path)
+        if not dir_exists:
+            return False
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        
+        #First we navigate to actual path
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break           
+        
+        children_dirs = user_data['childrenDirs']
+        #Then we create the directory
+        for dirs in range(len(children_dirs)):
+            if children_dirs[dirs]["name"] == dir_name:
+                del children_dirs[dirs]
+                break
+                
+        #Update user data
+        original_data = original_data['fileSystem']
+        self.update_user_data(username, original_data)
+        return True
+    
+    def delete_file(self, username : str, command_line : str, path : str):
+        
+        file_name = command_line.split(' ')[1]
+        file_exists = self.file_exists(username,file_name,path)
+        if not file_exists:
+            return False
+        
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+                
+        dir_files = user_data['childrenDocs']
+            
+        for file in range(len(dir_files)):
+            if dir_files[file]["name"] == file_name:
+                del dir_files[file]
+                break
+                
+        #Update user data
+        original_data = original_data['fileSystem']
+        self.update_user_data(username, original_data)
+        return True
+    
+    def locate_directory(self, username : str, path : str):
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+        return user_data
+    
+    def move_file(self, username : str, command_line : str, path : str):
+        
+        try:
+            file_name, destination_path = command_line.split(' ')[1:]
+            file_exists = self.file_exists(username,file_name,path)
+            dir_exists = self.dir_exists(username,file_name,path)
+
+            dir_levels = path.split('/')[1:-1]
+            new_dir_levels = destination_path.split('/')[1:-1]
+            original_data = self.get_user_data(username)
+            
+            user_data = original_data['fileSystem']
+            for level in dir_levels:
+                for dirs in user_data['childrenDirs']:
+                    if dirs['name'] == level:
+                        user_data = dirs           
+                        break
+            
+            new_dir_files = original_data['fileSystem']
+            for level in new_dir_levels:
+                for dirs in new_dir_files['childrenDirs']:
+                    if dirs['name'] == level:
+                        new_dir_files = dirs           
+                        break
+                        
+            if new_dir_files == original_data['fileSystem'] and destination_path != "root/":
+                return 2
+            
+            if file_exists:
+                dir_files = user_data['childrenDocs']
+                for index, file in enumerate(dir_files):
+                    if file["name"] == file_name:
+                        new_dir_files['childrenDocs'].append(file)
+                        del dir_files[index]
+                        break
+                
+            elif dir_exists:
+                children_dirs = user_data['childrenDirs']
+                for index, dirs in enumerate(children_dirs):
+                    if dirs["name"] == file_name:
+                        new_dir_files['childrenDirs'].append(dirs)
+                        del children_dirs[index]
+                        break
+                    
+            original_data = original_data['fileSystem']
+            self.update_user_data(username, original_data)
+            return 1
+        
+        except :
+            return 2
+        
+    
+    
     def list_dir(self, username : str, path : str):
         result = ""
         dir_levels = path.split('/')[:-1] # This deletes the empty character 
