@@ -61,7 +61,7 @@ class file_system_db :
                                 
                             }
             #Register user
-            self.collection.insert(new_user_data)
+            self.collection.insert_one(new_user_data)
             return True
     
     def file_exists(self, username : str, file_name : str, path:str):
@@ -141,7 +141,8 @@ class file_system_db :
                         "data" : file_content                        
                     })
         #Update user data
-        self.update_user_data(username, user_data)
+        original_data = original_data['fileSystem']
+        self.update_user_data(username, original_data)
         return True
     
     def create_dir(self, username : str, command_line : str, path : str):
@@ -179,5 +180,86 @@ class file_system_db :
             })
             
         #Update user data
-        self.update_user_data(username, user_data)
+        original_data = original_data['fileSystem']
+        self.update_user_data(username, original_data)
+        return True
+    
+    def list_dir(self, username : str, path : str):
+        result = ""
+        dir_levels = path.split('/')[:-1] # This deletes the empty character 
+        
+        user_data = self.get_user_data(username)['fileSystem']
+        print("dir levels",dir_levels)
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    print("ENTRA")
+                    user_data = dirs
+                    break
+        for direc in user_data["childrenDirs"]:
+            result += direc["name"]+"/\n"
+        for doc in user_data["childrenDocs"]:
+            result += doc["name"]+"\n"
+        
+            
+        return result
+    
+    def enter_dir(self, username : str, path : str, command_line : str):
+        new_dir = command_line.split(' ')[1]
+        if new_dir == "..":
+            
+            
+            return True,'/'.join(path.split('/')[:-2])+'/'
+        
+        dir_levels = path.split('/')[:-1] # This deletes the empty character 
+        
+        user_data = self.get_user_data(username)['fileSystem']
+        
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs
+                    break
+        for direc in user_data["childrenDirs"]:
+            if new_dir == direc["name"]:
+                print("Existe")
+                return True,path +new_dir+"/"
+          
+        
+        print("NO EXISTE")
+        return False,"Este directorio no existe en "+path
+    
+    def edit_file(self, username : str, command_line : str, path : str):
+        file_name = command_line.split(' ')[1]
+        file_content = re.findall(r'"(.*)"',command_line)[0]
+        
+        file_exists = self.file_exists(username,file_name,path)
+        
+        if not file_exists:
+            return False
+        
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+                
+        dir_files = user_data['childrenDocs']
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        for file in dir_files:
+            if file['name'] == file_name:
+                file['data'] = file_content
+                file['modification_date'] = timestamp        
+                break
+                
+        #Update user data
+        original_data = original_data['fileSystem']
+        self.update_user_data(username, original_data)
         return True
