@@ -13,7 +13,7 @@ def process_command():
     command_type = command_entered[0] 
     username = request.form['username']
     path = request.form['path']
-    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv"]
+    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr"]
     if command_type in command_names:
         
         #Touch command = Create new file in path given
@@ -83,6 +83,15 @@ def process_command():
                 alert_message = "Información inválida."
             return render_template('main_page.html',**locals())
         
+        elif command_type == "shr":
+            info_shr_successfully = file_system_db.share_info(username, command_line, path)
+            if not info_shr_successfully:
+                error_alert = True
+                alert_message = "No se encontró ningún directorio o archivo con ese nombre."
+            else:
+                success_alert = True
+                success_message = "Información compartida exitosamente."
+            return render_template('main_page.html',**locals())
         
         if command_type == "nano":
             file_edited_successfully = file_system_db.edit_file(username, command_line, path)
