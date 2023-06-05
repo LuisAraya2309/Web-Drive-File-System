@@ -13,7 +13,7 @@ def process_command():
     command_type = command_entered[0] 
     username = request.form['username']
     path = request.form['path']
-    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr", "open", "pps"]
+    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr", "open", "pps", "load"]
     if command_type in command_names:
         
         #Touch command = Create new file in path given
@@ -99,6 +99,17 @@ def process_command():
                 info = ""
                 error_alert = True
                 alert_message = "No existe un archivo con este nombre"
+            return render_template('main_page.html',**locals())
+        
+        #load file
+        elif command_type == "load":
+            copied_file = file_system_db.load_file(username, command_line, path)
+            if not copied_file:
+                error_alert = True
+                alert_message = "Ya existe un archivo con este nombre"
+            else:
+                success_alert = True
+                success_message = "Archivo copiado exitosamente"
             return render_template('main_page.html',**locals())
         
         elif command_type == "shr":

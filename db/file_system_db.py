@@ -493,3 +493,22 @@ class file_system_db :
                 break
         
         return properties
+    
+    #Copy file from real to virtual (load)
+    def load_file(self, username : str, command_line : str, path : str):
+        file_path = command_line.split(' ')[1]
+        file_name = file_path.split('/')[-1:][0]
+
+        if self.file_exists(username, file_name, path):
+            return False
+
+        file = open(file_path, 'r')
+        file_lines = file.readlines()
+        file_content = ""
+
+        for line in file_lines:
+            file_content += line
+        
+        file.close()
+
+        return self.create_file(username, "touch "+file_name+" \""+file_content+"\"", path)
