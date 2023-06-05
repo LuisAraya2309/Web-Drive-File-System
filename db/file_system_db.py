@@ -386,3 +386,63 @@ class file_system_db :
         original_data = original_data['fileSystem']
         self.update_user_data(username, original_data)
         return True
+    
+
+    #Open file
+    def open_file(self, username : str, command_line : str, path : str):
+        file_name = command_line.split(' ')[1]
+
+        file_exists = self.file_exists(username,file_name,path)
+        
+        if not file_exists:
+            return False
+        
+        info = ""
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+        
+        dir_files = user_data['childrenDocs']
+        for file in dir_files:
+            if file['name'] == file_name:
+                info = file['data']       
+                break
+        
+        return info
+    
+    #File properties
+    def file_properties(self, username : str, command_line : str, path : str):
+        file_name = command_line.split(' ')[1]
+
+        file_exists = self.file_exists(username,file_name,path)
+        
+        if not file_exists:
+            return False
+        
+        properties = ""
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        user_data = original_data['fileSystem']
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+        
+        dir_files = user_data['childrenDocs']
+        for file in dir_files:
+            if file['name'] == file_name:
+                properties += "Nombre y extensión: "+file['name']+"\n"
+                properties += "Fecha de creación: "+file['creation_date']+"\n"
+                properties += "Fecha de modificación: "+file['modification_date']+"\n"
+                properties += "Tamaño: "
+                break
+        
+        return properties

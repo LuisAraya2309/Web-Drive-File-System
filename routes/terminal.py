@@ -13,7 +13,7 @@ def process_command():
     command_type = command_entered[0] 
     username = request.form['username']
     path = request.form['path']
-    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv"]
+    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv", "open", "pps"]
     if command_type in command_names:
         
         #Touch command = Create new file in path given
@@ -83,6 +83,24 @@ def process_command():
                 alert_message = "Información inválida."
             return render_template('main_page.html',**locals())
         
+        #Show file content
+        elif command_type == "open":
+            info = file_system_db.open_file(username, command_line, path)
+            if not info:
+                info = ""
+                error_alert = True
+                alert_message = "No existe un archivo con este nombre"
+            return render_template('main_page.html',**locals())
+        
+        #Show file properties
+        elif command_type == "pps":
+            info = file_system_db.file_properties(username, command_line, path)
+            if not info:
+                info = ""
+                error_alert = True
+                alert_message = "No existe un archivo con este nombre"
+            return render_template('main_page.html',**locals())
+        
         
         if command_type == "nano":
             file_edited_successfully = file_system_db.edit_file(username, command_line, path)
@@ -93,6 +111,7 @@ def process_command():
                 success_alert = True
                 success_message = "Archivo editado exitosamente"
             return render_template('main_page.html',**locals())
+        
             
     else:
         show_alert = True
