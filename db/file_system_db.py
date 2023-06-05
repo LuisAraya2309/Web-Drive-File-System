@@ -20,6 +20,9 @@ class file_system_db :
     
     def update_user_data(self,username : str, new_data : dict):
         self.collection.update_one({'user': username},{"$set":{"fileSystem":new_data}})
+        
+    def update_shared_data(self,username : str, new_data : dict):
+        self.collection.update_one({'user': username},{"$set":{"sharedFiles":new_data}})
     
     def log_in(self,username : str, password : str):
         login_pipeline = [
@@ -56,6 +59,7 @@ class file_system_db :
                                 },
                                 "sharedFiles" : {
                                     "name" : "sharedFiles",
+                                    "childrenDirs" : [],
                                     "childrenDocs" : []
                                 }
                                 
@@ -242,18 +246,6 @@ class file_system_db :
         self.update_user_data(username, original_data)
         return True
     
-    def locate_directory(self, username : str, path : str):
-        dir_levels = path.split('/')[1:-1]
-        original_data = self.get_user_data(username)
-        user_data = original_data['fileSystem']
-        #First we locate the directory
-        for level in dir_levels:
-            for dirs in user_data['childrenDirs']:
-                if dirs['name'] == level:
-                    user_data = dirs           
-                    break
-        return user_data
-    
     def move_file(self, username : str, command_line : str, path : str):
         
         try:
@@ -305,6 +297,61 @@ class file_system_db :
         except :
             return 2
         
+        
+    def already_shared(self, file: list, username: str):
+        for user in file:
+            if user == username:
+                return False
+        return True
+        
+    def share_info(self, username : str, command_line : str, path : str):
+        user_name, file_name = command_line.split(' ')[1:]
+        file_exists = self.file_exists(username,file_name,path)
+        dir_exists = self.dir_exists(username,file_name,path)
+        
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        new_original_data = self.get_user_data(user_name)
+        
+        user_data = original_data['fileSystem']
+        new_user_data = new_original_data['sharedFiles']
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs
+                    break
+        
+        if file_exists:
+            dir_files = user_data['childrenDocs']
+            for file in dir_files:
+                if file["name"] == file_name:
+                    if self.already_shared(file["share_info"], user_name):
+                        
+                        new_user_data['childrenDocs'].append(file)
+                        if len(file["share_info"]) == 0:
+                            new_user_data['childrenDocs'][-1]["share_info"] += [username]
+                            
+                        file["share_info"].append(user_name)
+                        break
+        else:
+            return False    
+        
+        '''elif dir_exists:
+            children_dirs = user_data['childrenDirs']
+            for index, dirs in enumerate(children_dirs):
+                if dirs["name"] == file_name:
+                    shared_dir = children_dirs[index]
+                    new_user_data['childrenDirs'].append(shared_dir["share_info"].append(username))
+                    children_dirs[index]["share_info"].append(user_name)
+                    break'''
+                
+        original_data = original_data['fileSystem']
+        self.update_user_data(username, original_data)
+        
+        new_original_data = new_original_data['sharedFiles']
+        self.update_shared_data(user_name, new_original_data)
+    
+        return True
     
     
     def list_dir(self, username : str, path : str):
