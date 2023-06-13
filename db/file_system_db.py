@@ -72,7 +72,10 @@ class file_system_db :
         # Example path: root/documents/
         dir_levels = path.split('/')[1:-1] # This deletes the empty character and root dir
         # dir_leves = ['documents']
-        user_data = self.get_user_data(username)['fileSystem']
+        if "shareData" in path:
+            user_data = self.get_user_data(username)['sharedFiles']
+        else:    
+            user_data = self.get_user_data(username)['fileSystem']
         
         #First we locate the directory
         for level in dir_levels:
@@ -92,7 +95,10 @@ class file_system_db :
         # Example path: root/documents/
         dir_levels = path.split('/')[1:-1] # This deletes the empty character and root dir
         # dir_leves = ['documents']
-        user_data = self.get_user_data(username)['fileSystem']
+        if "shareData" in path:
+            user_data = self.get_user_data(username)['sharedFiles']
+        else:    
+            user_data = self.get_user_data(username)['fileSystem']
         
         #First we locate the directory
         for level in dir_levels:
@@ -196,7 +202,10 @@ class file_system_db :
             return False
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
-        user_data = original_data['fileSystem']
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
         
         #First we navigate to actual path
         for level in dir_levels:
@@ -213,8 +222,12 @@ class file_system_db :
                 break
                 
         #Update user data
-        original_data = original_data['fileSystem']
-        self.update_user_data(username, original_data)
+        if "shareData" in path:
+            original_data = original_data['sharedFiles']
+            self.update_shared_data(username, original_data)
+        else:
+            original_data = original_data['fileSystem']
+            self.update_user_data(username, original_data)
         return True
     
     def delete_file(self, username : str, command_line : str, path : str):
@@ -226,7 +239,10 @@ class file_system_db :
         
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
-        user_data = original_data['fileSystem']
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
         #First we locate the directory
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:
@@ -236,14 +252,18 @@ class file_system_db :
                 
         dir_files = user_data['childrenDocs']
             
-        for file in range(len(dir_files)):
-            if dir_files[file]["name"] == file_name:
-                del dir_files[file]
+        for index, file in enumerate(dir_files):
+            if file["name"] == file_name:
+                del dir_files[index]
                 break
                 
         #Update user data
-        original_data = original_data['fileSystem']
-        self.update_user_data(username, original_data)
+        if "shareData" in path:
+            original_data = original_data['sharedFiles']
+            self.update_shared_data(username, original_data)
+        else:
+            original_data = original_data['fileSystem']
+            self.update_user_data(username, original_data)
         return True
     
     def move_file(self, username : str, command_line : str, path : str):
@@ -303,7 +323,51 @@ class file_system_db :
             if user == username:
                 return False
         return True
+    
+    def move_through_data(self, shared_dir: dict, new_user: str, file_name: str):
+        for file in shared_dir['childrenDocs']:
+            if file['name'] == file_name:
+                #update shared_info
+                file['share_info'].append(new_user)
+                return True   
+            
+        for directory in shared_dir['childrenDirs']:
+            # Go to next set of files
+            print(directory['name'])
+            self.move_through_data(directory, new_user, file_name)
+       
+    def update_shared_user(self,users: list, file_name: str, new_user: str):
         
+        for index, user in enumerate(users):
+            print(user)
+            all_user_data = self.get_user_data(user)
+            if index == 0:
+                print("Entre a cambiar al primero")
+                user_data = all_user_data['fileSystem']
+                self.move_through_data(user_data, new_user, file_name)
+                all_user_data = all_user_data['fileSystem']
+                self.update_user_data(user, all_user_data)   
+            else:
+                user_data = all_user_data['sharedFiles']
+                self.move_through_data(user_data, new_user, file_name)
+                all_user_data = all_user_data['sharedFiles']
+                self.update_shared_data(user, all_user_data) 
+    
+    def update_shared_info(self, shared_dir: dict, new_user: str, username: str):
+        
+        for file in shared_dir['childrenDocs']:
+            if self.already_shared(file["share_info"], new_user):
+                self.update_shared_user(file['share_info'], file['name'], new_user)
+                #update shared_info
+                if len(file["share_info"]) == 0:
+                    file['share_info'].append(username)
+                
+                file['share_info'].append(new_user)
+            
+        for directory in shared_dir['childrenDirs']:
+            # Go to next set of files
+            self.update_shared_info(directory, new_user, username)
+    
     def share_info(self, username : str, command_line : str, path : str):
         user_name, file_name = command_line.split(' ')[1:]
         file_exists = self.file_exists(username,file_name,path)
@@ -313,7 +377,10 @@ class file_system_db :
         original_data = self.get_user_data(username)
         new_original_data = self.get_user_data(user_name)
         
-        user_data = original_data['fileSystem']
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
         new_user_data = new_original_data['sharedFiles']
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:
@@ -328,25 +395,33 @@ class file_system_db :
                     if self.already_shared(file["share_info"], user_name):
                         
                         new_user_data['childrenDocs'].append(file)
+                        self.update_shared_user(file["share_info"], file["name"], user_name)
                         if len(file["share_info"]) == 0:
                             new_user_data['childrenDocs'][-1]["share_info"] += [username]
                             
                         file["share_info"].append(user_name)
                         break
-        else:
-            return False    
         
-        '''elif dir_exists:
+        elif dir_exists:
             children_dirs = user_data['childrenDirs']
             for index, dirs in enumerate(children_dirs):
                 if dirs["name"] == file_name:
-                    shared_dir = children_dirs[index]
-                    new_user_data['childrenDirs'].append(shared_dir["share_info"].append(username))
-                    children_dirs[index]["share_info"].append(user_name)
-                    break'''
                 
-        original_data = original_data['fileSystem']
-        self.update_user_data(username, original_data)
+                    shared_dir = children_dirs[index]
+                    #Change every file share_info attribute
+                    self.update_shared_info(shared_dir,user_name, username)
+                    
+                    new_user_data['childrenDirs'].append(shared_dir)
+                    break
+        else:
+            return False    
+                
+        if "shareData" in path:
+            original_data = original_data['sharedFiles']
+            self.update_shared_data(username, original_data)
+        else:
+            original_data = original_data['fileSystem']
+            self.update_user_data(username, original_data)
         
         new_original_data = new_original_data['sharedFiles']
         self.update_shared_data(user_name, new_original_data)
@@ -357,8 +432,12 @@ class file_system_db :
     def list_dir(self, username : str, path : str):
         result = ""
         dir_levels = path.split('/')[:-1] # This deletes the empty character 
-        
-        user_data = self.get_user_data(username)['fileSystem']
+
+        if "shareData" in dir_levels:
+            user_data = self.get_user_data(username)['sharedFiles']
+        else:
+            user_data = self.get_user_data(username)['fileSystem']
+
         print("dir levels",dir_levels)
         #First we locate the directory
         for level in dir_levels:
@@ -372,18 +451,31 @@ class file_system_db :
         for doc in user_data["childrenDocs"]:
             result += doc["name"]+"\n"
         
-            
         return result
     
     def enter_dir(self, username : str, path : str, command_line : str):
         new_dir = command_line.split(' ')[1]
         if new_dir == "..":
             
-            
             return True,'/'.join(path.split('/')[:-2])+'/'
         
         dir_levels = path.split('/')[:-1] # This deletes the empty character 
         
+        if new_dir== "shareData" or "shareData" in dir_levels:
+            user_data = self.get_user_data(username)['sharedFiles']
+            print(dir_levels)
+            if "shareData" in dir_levels:
+                for level in dir_levels:
+                    for dirs in user_data['childrenDirs']:
+                        if dirs['name'] == level:
+                            user_data = dirs
+                            break
+                for direc in user_data["childrenDirs"]:
+                    if new_dir == direc["name"]:
+                        return True,path +new_dir+"/"
+            else:
+                return True,path +new_dir+"/"
+            
         user_data = self.get_user_data(username)['fileSystem']
         
         #First we locate the directory
@@ -401,6 +493,34 @@ class file_system_db :
         print("NO EXISTE")
         return False,"Este directorio no existe en "+path
     
+    def move_update_message(self, shared_dir: dict, new_message: str, file_name: str, timestamp: str):
+        for file in shared_dir['childrenDocs']:
+            if file['name'] == file_name:
+                #update shared_info
+                file['data'] = new_message
+                file['modification_date'] = timestamp
+                return True 
+            
+        for directory in shared_dir['childrenDirs']:
+            # Go to next set of files
+            self.move_update_message(directory, new_message, file_name, timestamp)
+    
+    def update_message(self, users: list, file_name: str, new_message: str, timestamp: str):
+        for index, user in enumerate(users):
+            all_user_data = self.get_user_data(user)
+            
+            if index == 0:
+                user_data = all_user_data['fileSystem']
+                self.move_update_message(user_data, new_message, file_name, timestamp)
+                all_user_data = all_user_data['fileSystem']
+                self.update_user_data(user, all_user_data)   
+            else:
+                user_data = all_user_data['sharedFiles']
+                self.move_update_message(user_data, new_message, file_name, timestamp)
+                all_user_data = all_user_data['sharedFiles']
+                self.update_shared_data(user, all_user_data)   
+       
+    
     def edit_file(self, username : str, command_line : str, path : str):
         file_name = command_line.split(' ')[1]
         file_content = re.findall(r'"(.*)"',command_line)[0]
@@ -412,7 +532,10 @@ class file_system_db :
         
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
-        user_data = original_data['fileSystem']
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
         #First we locate the directory
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:
@@ -426,12 +549,19 @@ class file_system_db :
         for file in dir_files:
             if file['name'] == file_name:
                 file['data'] = file_content
-                file['modification_date'] = timestamp        
+                file['modification_date'] = timestamp
+                self.update_message(file['share_info'], file['name'], file_content, timestamp)
                 break
                 
         #Update user data
-        original_data = original_data['fileSystem']
-        self.update_user_data(username, original_data)
+        
+        if "shareData" in path:
+            original_data = original_data['sharedFiles']
+            self.update_shared_data(username, original_data)
+        else:
+            original_data = original_data['fileSystem']
+            self.update_user_data(username, original_data)
+        
         return True
     
 
@@ -447,7 +577,10 @@ class file_system_db :
         info = ""
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
-        user_data = original_data['fileSystem']
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
         #First we locate the directory
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:
@@ -475,7 +608,10 @@ class file_system_db :
         properties = ""
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
-        user_data = original_data['fileSystem']
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
         #First we locate the directory
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:

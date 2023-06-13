@@ -19,9 +19,15 @@ def process_command():
         #Touch command = Create new file in path given
         if command_type == "touch":
             file_created_successfully = file_system_db.create_file(username, command_line, path)
-            if not file_created_successfully:
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+            
+            elif not file_created_successfully:
                 error_alert = True
                 alert_message = "Ya existe un archivo con ese nombre. Agregue --force para sobreescribir el archivo."
+            
             else:
                 success_alert = True
                 success_message = "Archivo creado exitosamente"
@@ -29,9 +35,15 @@ def process_command():
 
         elif command_type == "mkdir":
             dir_created_successfully = file_system_db.create_dir(username, command_line, path)
-            if not dir_created_successfully:
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear más directorios."
+                
+            elif not dir_created_successfully:
                 error_alert = True
                 alert_message = "Ya existe un directorio con ese nombre. Agregue --force para sobreescribir el directorio."
+            
             else:
                 success_alert = True
                 success_message = "Directorio creado exitosamente"    
@@ -72,12 +84,19 @@ def process_command():
         
         elif command_type == "mv":
             file_moved_successfully = file_system_db.move_file(username, command_line, path)
-            if file_moved_successfully == 0:
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+            
+            elif file_moved_successfully == 0:
                 error_alert = True
                 alert_message = "No se encontró ningún directorio o archivo con ese nombre."
+            
             elif file_moved_successfully == 1 :
                 success_alert = True
                 success_message = "Se traslado la información correctamente."
+            
             else:
                 error_alert = True
                 alert_message = "Información inválida."
@@ -104,7 +123,12 @@ def process_command():
         #load file
         elif command_type == "load":
             copied_file = file_system_db.load_file(username, command_line, path)
-            if not copied_file:
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+                
+            elif not copied_file:
                 error_alert = True
                 alert_message = "Ya existe un archivo con este nombre"
             else:
@@ -131,8 +155,7 @@ def process_command():
                 success_alert = True
                 success_message = "Archivo editado exitosamente"
             return render_template('main_page.html',**locals())
-        
-            
+                 
     else:
         show_alert = True
         alert_message = "El comando ingresado no es válido"
