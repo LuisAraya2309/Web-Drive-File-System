@@ -18,7 +18,7 @@ def process_command():
         
         #Touch command = Create new file in path given
         if command_type == "touch":
-            file_created_successfully = file_system_db.create_file(username, command_line, path)
+            file_created_successfully,message = file_system_db.create_file(username, command_line, path)
             
             if "shareData" in path:
                 error_alert = True
@@ -26,7 +26,7 @@ def process_command():
             
             elif not file_created_successfully:
                 error_alert = True
-                alert_message = "Ya existe un archivo con ese nombre. Agregue --force para sobreescribir el archivo."
+                alert_message = message
             
             else:
                 success_alert = True
@@ -34,7 +34,7 @@ def process_command():
             return render_template('main_page.html',**locals())
 
         elif command_type == "mkdir":
-            dir_created_successfully = file_system_db.create_dir(username, command_line, path)
+            dir_created_successfully, message = file_system_db.create_dir(username, command_line, path)
             
             if "shareData" in path:
                 error_alert = True
@@ -42,7 +42,7 @@ def process_command():
                 
             elif not dir_created_successfully:
                 error_alert = True
-                alert_message = "Ya existe un directorio con ese nombre. Agregue --force para sobreescribir el directorio."
+                alert_message = message
             
             else:
                 success_alert = True
@@ -184,10 +184,10 @@ def process_command():
             return render_template('main_page.html',**locals())
         
         if command_type == "nano":
-            file_edited_successfully = file_system_db.edit_file(username, command_line, path)
+            file_edited_successfully,message = file_system_db.edit_file(username, command_line, path)
             if not file_edited_successfully:
                 error_alert = True
-                alert_message = "No existe un archivo con este nombre para poder editar"
+                alert_message = message
             else:
                 success_alert = True
                 success_message = "Archivo editado exitosamente"

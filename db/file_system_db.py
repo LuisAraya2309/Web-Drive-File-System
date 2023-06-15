@@ -121,11 +121,12 @@ class file_system_db :
         forced_touch = "--force" in command_line.replace(file_content,"")
         file_exists = self.file_exists(username,file_name,path)
         if file_exists and not forced_touch:
-            return False
+            return False,"Ya existe un archivo con ese nombre. Agregue --force para sobreescribir el archivo."
         
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
         user_data = original_data['fileSystem']
+        
         #First we locate the directory
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:
@@ -151,16 +152,18 @@ class file_system_db :
                         "data" : file_content                        
                     })
         #Update user data
+        if self.get_size_of_system(original_data) > int(original_data["storage"]):
+            return False, "No hay espacio de almacenamiento suficiente"
         original_data = original_data['fileSystem']
         self.update_user_data(username, original_data)
-        return True
+        return True,""
     
     def create_dir(self, username : str, command_line : str, path : str):
         dir_name = command_line.split(' ')[1]
         forced_mkdir = '--force' in command_line
         dir_exists = self.dir_exists(username, dir_name, path)
         if dir_exists and not forced_mkdir:
-            return False
+            return False,"Ya existe un directorio con ese nombre. Agregue --force para sobreescribir el directorio."
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
         user_data = original_data['fileSystem']
@@ -190,9 +193,11 @@ class file_system_db :
             })
             
         #Update user data
+        if self.get_size_of_system(original_data) > int(original_data["storage"]):
+            return False, "No hay espacio de almacenamiento suficiente"
         original_data = original_data['fileSystem']
         self.update_user_data(username, original_data)
-        return True
+        return True,""
     
     def delete_dir(self, username : str, command_line : str, path : str):
         
@@ -443,7 +448,7 @@ class file_system_db :
         for level in dir_levels:
             for dirs in user_data['childrenDirs']:
                 if dirs['name'] == level:
-                    print("ENTRA")
+                    
                     user_data = dirs
                     break
         for direc in user_data["childrenDirs"]:
@@ -528,7 +533,7 @@ class file_system_db :
         file_exists = self.file_exists(username,file_name,path)
         
         if not file_exists:
-            return False
+            return False,""
         
         dir_levels = path.split('/')[1:-1]
         original_data = self.get_user_data(username)
@@ -559,10 +564,12 @@ class file_system_db :
             original_data = original_data['sharedFiles']
             self.update_shared_data(username, original_data)
         else:
+            if self.get_size_of_system(original_data) > int(original_data["storage"]):
+                return False, "No hay espacio de almacenamiento suficiente"
             original_data = original_data['fileSystem']
             self.update_user_data(username, original_data)
         
-        return True
+        return True,""
     
 
     #Open file
@@ -736,3 +743,24 @@ class file_system_db :
         
         except :
             return 2
+    
+    def get_size_of_system(self, file_system:dict):
+        root = file_system["fileSystem"]
+        sharedFiles = file_system["sharedFiles"]
+        bytes_size = 0
+        bytes_size += self.get_size_of_system_aux(root) + self.get_size_of_system_aux(sharedFiles)
+        return bytes_size
+        
+        
+    def get_size_of_system_aux(self, file_system:dict):
+        bytes_size = len(file_system["name"])+len(file_system["creation_date"])+len(file_system["modification_date"])
+        
+        for docs in file_system["childrenDocs"]:
+            bytes_size += len(docs["data"])+ len(docs["name"])+len(docs["creation_date"])+len(docs["modification_date"])
+            
+            
+        for dirs in file_system["childrenDirs"]:
+            bytes_size += self.get_size_of_system_aux(dirs)
+        return bytes_size
+
+        
