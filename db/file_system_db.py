@@ -625,7 +625,7 @@ class file_system_db :
                 properties += "Nombre y extensión: "+file['name']+"\n"
                 properties += "Fecha de creación: "+file['creation_date']+"\n"
                 properties += "Fecha de modificación: "+file['modification_date']+"\n"
-                properties += "Tamaño: "
+                properties += "Tamaño: "+str(len(file['data'].encode("utf-8")))+" bytes"
                 break
         
         return properties
@@ -648,3 +648,91 @@ class file_system_db :
         file.close()
 
         return self.create_file(username, "touch "+file_name+" \""+file_content+"\"", path)
+
+    #Copy file from virtual to real (download)
+    def download_file(self, username : str, command_line : str, path : str):
+        file_path = command_line.split(' ')[2]
+        file_name = command_line.split(' ')[1]
+
+        if not self.file_exists(username, file_name, path):
+            return False
+        
+        info = ""
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
+
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+        
+        dir_files = user_data['childrenDocs']
+        for file in dir_files:
+            if file['name'] == file_name:
+                info = file['data']       
+                break
+
+        #Create the file
+        new_file = open(file_path+"/"+file_name, 'w')
+        new_file.write(info)
+        new_file.close()
+
+        return True
+
+    #Copy file from virtual to virtual (copy)
+    def copy_file(self, username : str, command_line : str, path : str):
+        
+        try:
+            file_name, destination_path = command_line.split(' ')[1:]
+            file_exists = self.file_exists(username,file_name,path)
+            dir_exists = self.dir_exists(username,file_name,path)
+
+            dir_levels = path.split('/')[1:-1]
+            new_dir_levels = destination_path.split('/')[1:-1]
+            original_data = self.get_user_data(username)
+            
+            user_data = original_data['fileSystem']
+            for level in dir_levels:
+                for dirs in user_data['childrenDirs']:
+                    if dirs['name'] == level:
+                        user_data = dirs           
+                        break
+            
+            new_dir_files = original_data['fileSystem']
+            for level in new_dir_levels:
+                for dirs in new_dir_files['childrenDirs']:
+                    if dirs['name'] == level:
+                        new_dir_files = dirs           
+                        break
+                        
+            if new_dir_files == original_data['fileSystem'] and destination_path != "root/":
+                return 2
+            
+            if file_exists:
+                dir_files = user_data['childrenDocs']
+                for index, file in enumerate(dir_files):
+                    if file["name"] == file_name:
+                        if file not in new_dir_files['childrenDocs']:
+                            new_dir_files['childrenDocs'].append(file)
+                        break
+                
+            elif dir_exists:
+                children_dirs = user_data['childrenDirs']
+                for index, dirs in enumerate(children_dirs):
+                    if dirs["name"] == file_name:
+                        if dirs not in new_dir_files['childrenDirs']:
+                            new_dir_files['childrenDirs'].append(dirs)
+                        break
+                    
+            original_data = original_data['fileSystem']
+            self.update_user_data(username, original_data)
+            return 1
+        
+        except :
+            return 2

@@ -13,7 +13,7 @@ def process_command():
     command_type = command_entered[0] 
     username = request.form['username']
     path = request.form['path']
-    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr", "open", "pps", "load"]
+    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr", "open", "pps", "load", "dl", "copy"]
     if command_type in command_names:
         
         #Touch command = Create new file in path given
@@ -95,7 +95,7 @@ def process_command():
             
             elif file_moved_successfully == 1 :
                 success_alert = True
-                success_message = "Se traslado la información correctamente."
+                success_message = "Se trasladó la información correctamente."
             
             else:
                 error_alert = True
@@ -134,6 +134,43 @@ def process_command():
             else:
                 success_alert = True
                 success_message = "Archivo copiado exitosamente"
+            return render_template('main_page.html',**locals())
+        
+        #download file
+        elif command_type == "dl":
+            copied_file = file_system_db.download_file(username, command_line, path)
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+                
+            elif not copied_file:
+                error_alert = True
+                alert_message = "No existe un archivo con este nombre"
+            else:
+                success_alert = True
+                success_message = "Archivo descargado exitosamente"
+            return render_template('main_page.html',**locals())
+        
+        #copy file or dir
+        elif command_type == "copy":
+            file_moved_successfully = file_system_db.copy_file(username, command_line, path)
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+            
+            elif file_moved_successfully == 0:
+                error_alert = True
+                alert_message = "No se encontró ningún directorio o archivo con ese nombre."
+            
+            elif file_moved_successfully == 1 :
+                success_alert = True
+                success_message = "Se copió la información correctamente."
+            
+            else:
+                error_alert = True
+                alert_message = "Información inválida."
             return render_template('main_page.html',**locals())
         
         elif command_type == "shr":
