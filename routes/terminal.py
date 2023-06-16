@@ -13,7 +13,7 @@ def process_command():
     command_type = command_entered[0] 
     username = request.form['username']
     path = request.form['path']
-    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr", "open", "pps", "load", "dl", "copy"]
+    command_names = ["touch","mkdir","ls","cd","nano", "rm", "rmdir","mv","shr", "open", "pps", "load", "dl", "copy", "loadir", "dldir"]
     if command_type in command_names:
         
         #Touch command = Create new file in path given
@@ -130,10 +130,26 @@ def process_command():
                 
             elif not copied_file:
                 error_alert = True
-                alert_message = "Ya existe un archivo con este nombre"
+                alert_message = "Ya existe un archivo con este nombre o no se encontró el archivo"
             else:
                 success_alert = True
                 success_message = "Archivo copiado exitosamente"
+            return render_template('main_page.html',**locals())
+        
+        #load dir
+        elif command_type == "loadir":
+            copied_file = file_system_db.load_dir(username, command_line, path)
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+                
+            elif not copied_file:
+                error_alert = True
+                alert_message = "Ya existe un directorio con este nombre o no se encontró el directorio"
+            else:
+                success_alert = True
+                success_message = "Directorio copiado exitosamente"
             return render_template('main_page.html',**locals())
         
         #download file
@@ -150,6 +166,22 @@ def process_command():
             else:
                 success_alert = True
                 success_message = "Archivo descargado exitosamente"
+            return render_template('main_page.html',**locals())
+        
+        #download dir
+        elif command_type == "dldir":
+            copied_file = file_system_db.download_dir(username, command_line, path)
+            
+            if "shareData" in path:
+                error_alert = True
+                alert_message = "En esta caperta no puede crear archivos."
+                
+            elif not copied_file:
+                error_alert = True
+                alert_message = "No existe un directorio con este nombre o ya fue descargado en esta ruta"
+            else:
+                success_alert = True
+                success_message = "Directorio descargado exitosamente"
             return render_template('main_page.html',**locals())
         
         #copy file or dir

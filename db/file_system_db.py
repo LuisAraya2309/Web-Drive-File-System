@@ -1,6 +1,7 @@
 from datetime import datetime
 import pymongo
 import re
+import os
 
 
 class file_system_db :
@@ -59,6 +60,8 @@ class file_system_db :
                                 },
                                 "sharedFiles" : {
                                     "name" : "sharedFiles",
+                                    "creation_date" : timestamp,
+                                    "modification_date" : timestamp,
                                     "childrenDirs" : [],
                                     "childrenDocs" : []
                                 }
@@ -645,16 +648,19 @@ class file_system_db :
         if self.file_exists(username, file_name, path):
             return False
 
-        file = open(file_path, 'r')
-        file_lines = file.readlines()
-        file_content = ""
+        try:
+            file = open(file_path, 'r')
+            file_lines = file.readlines()
+            file_content = ""
 
-        for line in file_lines:
-            file_content += line
-        
-        file.close()
+            for line in file_lines:
+                file_content += line
+            
+            file.close()
 
-        return self.create_file(username, "touch "+file_name+" \""+file_content+"\"", path)
+            return self.create_file(username, "touch "+file_name+" \""+file_content+"\"", path)
+        except:
+            return False
 
     #Copy file from virtual to real (download)
     def download_file(self, username : str, command_line : str, path : str):
@@ -763,4 +769,65 @@ class file_system_db :
             bytes_size += self.get_size_of_system_aux(dirs)
         return bytes_size
 
+    #Copy dir from real to virtual
+    def load_dir(self, username : str, command_line : str, path : str):
+        dir_path = command_line.split(' ')[1]
+        dir_name = dir_path.split('/')[-1:][0]
         
+        if self.dir_exists(username,dir_name,path):
+            return False
+        try:
+            content = os.listdir(dir_path)
+            self.create_dir(username, "mkdir "+dir_name, path)
+
+            new_path = path+dir_name+"/"
+            for file in content:
+                if os.path.isdir(os.path.join(dir_path, file)):
+                    self.load_dir(username, "loadir "+dir_path+"/"+file, new_path)
+                else:
+                    self.load_file(username, "load "+dir_path+"/"+file, new_path)
+
+            return True
+        except:
+            return False
+
+    #Copy dir from virtual to real
+    def download_dir(self, username : str, command_line : str, path : str):
+        dir_path = command_line.split(' ')[2]
+        dir_name = command_line.split(' ')[1]
+        
+        if not self.dir_exists(username, dir_name, path):
+            return False
+        
+        dir_levels = path.split('/')[1:-1]
+        original_data = self.get_user_data(username)
+        if "shareData" in path:
+            user_data = original_data['sharedFiles']
+        else:
+            user_data = original_data['fileSystem']
+
+        #add directory
+        dir_levels += [dir_name]
+        new_path = path+dir_name+"/"
+
+        #First we locate the directory
+        for level in dir_levels:
+            for dirs in user_data['childrenDirs']:
+                if dirs['name'] == level:
+                    user_data = dirs           
+                    break
+
+        #create directory
+        try:
+            os.mkdir(dir_path+"/"+dir_name)
+        except OSError:
+            return False
+
+        for direc in user_data["childrenDirs"]:
+            new_dir = direc["name"]
+            self.download_dir(username, "dldir "+new_dir+" "+dir_path+"/"+dir_name, new_path)
+        for doc in user_data["childrenDocs"]:
+            new_doc = doc['name']
+            self.download_file(username, "dl "+ new_doc +" "+dir_path+"/"+dir_name, new_path)
+        return True
+
